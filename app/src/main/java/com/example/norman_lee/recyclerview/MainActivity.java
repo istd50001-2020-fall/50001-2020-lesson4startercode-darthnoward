@@ -3,6 +3,7 @@ package com.example.norman_lee.recyclerview;
 import android.app.Activity;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.graphics.Bitmap;
 import android.os.Bundle;
 
 import android.support.annotation.Nullable;
@@ -30,6 +31,7 @@ public class MainActivity extends AppCompatActivity {
     ImageView imageViewAdded;
 
     DataSource dataSource;
+    ArrayList<Integer> data;
 
     final String KEY_DATA = "data";
     final String LOGCAT = "RV";
@@ -47,14 +49,40 @@ public class MainActivity extends AppCompatActivity {
         setSupportActionBar(toolbar);
 
         //TODO 11.1 Get references to the widgets
+        recyclerView = findViewById(R.id.charaRecyclerView);
+        imageViewAdded = findViewById(R.id.imageViewAdded);
 
         //TODO 12.7 Load the Json string from shared Preferences
         //TODO 12.8 Initialize your dataSource object with the Json string
+        mPreferences = getSharedPreferences(PREF_FILE, MODE_PRIVATE);
+        Gson gson = new Gson();
+        String json = mPreferences.getString(KEY_DATA, "");
+        if (!json.isEmpty()){
+            ArrayList<Integer> drawableId = new ArrayList<>();
+            drawableId.add(R.drawable.bulbasaur);
+            drawableId.add(R.drawable.eevee);
+            drawableId.add(R.drawable.gyrados);
+            drawableId.add(R.drawable.pikachu);
+            drawableId.add(R.drawable.psyduck);
+            drawableId.add(R.drawable.snorlax);
+            drawableId.add(R.drawable.spearow);
+            drawableId.add(R.drawable.squirtle);
+
+            dataSource = Utils.firstLoadImages(this,
+                    drawableId);
+        }
+        else{
+            dataSource = gson.fromJson(json, DataSource.class);
+        }
+
 
         //TODO 11.2 Create your dataSource object by calling Utils.firstLoadImages
+
         //TODO 11.3 --> Go to CharaAdapter
         //TODO 11.8 Complete the necessary code to initialize your RecyclerView
-
+        charaAdapter = new CharaAdapter(MainActivity.this, dataSource);
+        recyclerView.setAdapter(charaAdapter);
+        recyclerView.setLayoutManager(new LinearLayoutManager(this));
         //TODO 12.9 [OPTIONAL] Add code to delete a RecyclerView item upon swiping. See notes for the code.
 
 
@@ -75,6 +103,12 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onPause(){
         super.onPause();
+        SharedPreferences.Editor editor = mPreferences.edit();
+        Gson gson = new Gson();
+        String json = gson.toJson(dataSource);
+        editor.putString(KEY_DATA, json);
+        editor.apply();
+
     }
 
 
@@ -106,6 +140,12 @@ public class MainActivity extends AppCompatActivity {
         super.onActivityResult(requestCode, resultCode, data);
 
         if( requestCode == REQUEST_CODE_IMAGE && resultCode == Activity.RESULT_OK){
+            String path = data.getStringExtra(DataEntry.KEY_PATH);
+            String name = data.getStringExtra(DataEntry.KEY_NAME);
+            dataSource.addData(name,path);
+            Bitmap bitmap = dataSource.getImage( dataSource.getSize() - 1);
+            imageViewAdded.setImageBitmap(bitmap);
+            charaAdapter.notifyDataSetChanged();
         }
 
 

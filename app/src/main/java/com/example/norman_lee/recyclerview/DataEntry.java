@@ -15,7 +15,9 @@ import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.Toast;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.net.URI;
 
 public class DataEntry extends AppCompatActivity {
 
@@ -56,7 +58,15 @@ public class DataEntry extends AppCompatActivity {
         buttonOK.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-
+                int resultCode = Activity.RESULT_OK;
+                Intent resultIntent = new Intent();
+                String name = editTextNameEntry.getText().toString();
+                String path = Utils.saveToInternalStorage(bitmap, name,
+                        DataEntry.this);
+                resultIntent.putExtra(KEY_NAME, name);
+                resultIntent.putExtra(KEY_PATH, path);
+                setResult(resultCode,resultIntent);
+                finish();
             }
         });
 
@@ -68,7 +78,15 @@ public class DataEntry extends AppCompatActivity {
     //TODO 12.3 Write onActivityResult to get the image selected
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         if (requestCode == REQUEST_IMAGE_GET && resultCode == RESULT_OK) {
-
+            Uri uri = data.getData();
+            imageViewSelected.setImageURI(uri);
+            try{
+                bitmap = MediaStore.Images.Media.getBitmap( this.getContentResolver(), uri);
+            }catch(FileNotFoundException ex){
+                //write a Toast
+            }catch(IOException ex){
+                //write a Toast
+            }
         }
     }
 }
